@@ -1165,6 +1165,12 @@ namespace WebSocketSharp
       return ret;
     }
 
+    private readonly IDictionary<string, string> _headers = new Dictionary<string, string>();
+    public IDictionary<string, string> Headers
+    {
+        get { return _headers; }
+    }
+
     // As client
     private HttpRequest createHandshakeRequest ()
     {
@@ -1197,6 +1203,15 @@ namespace WebSocketSharp
 
       if (authRes != null)
         headers["Authorization"] = authRes.ToString ();
+
+      // Set custom headers
+      if (_headers.Count != 0)
+      {
+        foreach (var header in _headers)
+        {
+            headers[header.Key] = header.Value;
+        }
+      }
 
       if (_cookies.Count > 0)
         ret.SetCookies (_cookies);
