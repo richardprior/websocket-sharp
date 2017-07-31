@@ -93,7 +93,7 @@ namespace WebSocketSharp
     private bool                           _inContinuation;
     private volatile bool                  _inMessage;
     private volatile Logger                _logger;
-    private static readonly int            _maxRetryCountForConnect;
+    private int            _maxRetryCountForConnect;
     private Action<MessageEventArgs>       _message;
     private Queue<MessageEventArgs>        _messageEventQueue;
     private uint                           _nonceCount;
@@ -115,15 +115,17 @@ namespace WebSocketSharp
     private Uri                            _uri;
     private const string                   _version = "13";
     private TimeSpan                       _waitTime;
+    private readonly IDictionary<string, string> _headers = new Dictionary<string, string>();
+        
 
-    #endregion
+        #endregion
 
-    #region Internal Fields
+        #region Internal Fields
 
-    /// <summary>
-    /// Represents the empty array of <see cref="byte"/> used internally.
-    /// </summary>
-    internal static readonly byte[] EmptyBytes;
+        /// <summary>
+        /// Represents the empty array of <see cref="byte"/> used internally.
+        /// </summary>
+        internal static readonly byte[] EmptyBytes;
 
     /// <summary>
     /// Represents the length used to determine whether the data should be fragmented in sending.
@@ -150,7 +152,6 @@ namespace WebSocketSharp
 
     static WebSocket ()
     {
-      _maxRetryCountForConnect = 10;
       EmptyBytes = new byte[0];
       FragmentLength = 1016;
       RandomNumber = new RNGCryptoServiceProvider ();
@@ -624,14 +625,25 @@ namespace WebSocketSharp
       }
     }
 
-    #endregion
+    public IDictionary<string, string> Headers
+    {
+        get { return _headers; }
+    }
 
-    #region Public Events
+    public int MaxRetryCountForConnect
+    {
+        set { _maxRetryCountForConnect = value; }
+        get { return _maxRetryCountForConnect; }
+    }
 
-    /// <summary>
-    /// Occurs when the WebSocket connection has been closed.
-    /// </summary>
-    public event EventHandler<CloseEventArgs> OnClose;
+        #endregion
+
+        #region Public Events
+
+        /// <summary>
+        /// Occurs when the WebSocket connection has been closed.
+        /// </summary>
+        public event EventHandler<CloseEventArgs> OnClose;
 
     /// <summary>
     /// Occurs when the <see cref="WebSocket"/> gets an error.
@@ -1108,7 +1120,7 @@ namespace WebSocketSharp
           return false;
         }
 
-        if (_retryCountForConnect > _maxRetryCountForConnect) {
+        if (_maxRetryCountForConnect != 0 && _retryCountForConnect > _maxRetryCountForConnect) {
           _retryCountForConnect = 0;
           _logger.Fatal ("A series of reconnecting has failed.");
 
@@ -1164,13 +1176,7 @@ namespace WebSocketSharp
 
       return ret;
     }
-
-    private readonly IDictionary<string, string> _headers = new Dictionary<string, string>();
-    public IDictionary<string, string> Headers
-    {
-        get { return _headers; }
-    }
-
+        
     // As client
     private HttpRequest createHandshakeRequest ()
     {
